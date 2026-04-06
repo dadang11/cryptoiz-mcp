@@ -1,6 +1,7 @@
 {
   "name": "cryptoiz-mcp",
-  "version": "4.15.12",
+  "version": "4.15.13",
+  "mcpName": "io.github.dadang11/cryptoiz",
   "description": "CryptoIZ MCP Server - Solana DEX trading signals via Claude Desktop with x402 USDC micropayments (V2 Dexter facilitator)",
   "main": "index.js",
   "type": "module",
@@ -24,13 +25,21 @@
   },
   "keywords": [
     "mcp",
+    "mcp-server",
     "claude",
     "solana",
     "crypto",
     "trading",
     "x402",
     "usdc",
-    "dexter"
+    "dexter",
+    "whale-tracking",
+    "smart-money",
+    "alpha-signals",
+    "divergence",
+    "accumulation",
+    "defi",
+    "dex"
   ],
   "author": "CryptoIZ",
   "license": "MIT",

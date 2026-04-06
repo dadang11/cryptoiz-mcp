@@ -9,7 +9,7 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprot
 import { Connection, Keypair, PublicKey, Transaction, SystemProgram, VersionedTransaction, TransactionMessage } from '@solana/web3.js';
 import bs58 from 'bs58';
 
-var VERSION = 'v4.15.12';
+var VERSION = 'v4.15.13';
 var GATEWAY = 'https://rehqwsypjnjirhuiapqh.supabase.co/functions/v1/mcp-x402-gateway';
 // Per-tool endpoints for Dexter settlement naming
 var TOOL_ENDPOINTS = {

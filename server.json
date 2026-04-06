@@ -1,0 +1,30 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
+  "name": "io.github.dadang11/cryptoiz",
+  "description": "AI-powered Solana DEX smart money signals. Get whale/dolphin accumulation alerts, price-volume divergence detection, alpha scanner with 20 top-scoring tokens, and BTC macro regime analysis. Pay-per-call via x402 USDC on Solana — no subscription, no API key needed.",
+  "status": "active",
+  "repository": {
+    "url": "https://github.com/dadang11/cryptoiz-mcp",
+    "source": "github"
+  },
+  "version": "4.15.13",
+  "packages": [
+    {
+      "registry_type": "npm",
+      "registry_base_url": "https://registry.npmjs.org",
+      "identifier": "cryptoiz-mcp",
+      "version": "4.15.13",
+      "transport": {
+        "type": "stdio"
+      },
+      "environment_variables": [
+        {
+          "name": "SVM_PRIVATE_KEY",
+          "description": "Your Solana wallet private key (base58) for x402 USDC payments",
+          "isRequired": true,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}

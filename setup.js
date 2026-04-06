@@ -4,7 +4,7 @@ import path from 'path';
 import os from 'os';
 import { execSync } from 'child_process';
 
-var VERSION = 'v4.15.12';
+var VERSION = 'v4.15.13';
 function print(msg) { process.stdout.write(msg + '\n'); }
 
 function findConfigPath() {
