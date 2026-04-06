@@ -1,37 +1,71 @@
 # CryptoIZ MCP Server
 
-AI-powered Solana DEX smart money signals for Claude Desktop. Pay per call with USDC on Solana via x402 Dexter protocol.
+**Smart money signals for Solana DEX — directly in Claude Desktop.**
 
-## Quick Install (2 commands)
+Whale accumulation, price-volume divergence, alpha scoring, BTC regime — all powered by proprietary AI scanners. Pay per call with USDC via x402. No subscription. No API key. Gas sponsored.
+
+[![npm version](https://img.shields.io/npm/v/cryptoiz-mcp.svg)](https://www.npmjs.com/package/cryptoiz-mcp)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![x402 Payments](https://img.shields.io/badge/payments-x402%20USDC-blue.svg)](https://x402.org)
+[![Solana](https://img.shields.io/badge/network-Solana-purple.svg)](https://solana.com)
+
+---
+
+## What You Get
+
+| Tool | Cost | What It Does |
+|------|------|--------------|
+| `get_alpha_scanner` | $0.05 | Top 20 tokens ranked by whale + dolphin accumulation signals |
+| `get_divergence` | $0.02 | Price-volume divergence detection (bullish, bearish, hidden) |
+| `get_accumulation` | $0.02 | 4-dimensional accumulation scoring across Solana DEX |
+| `get_btc_regime` | $0.01 | BTC macro regime + Fear/Greed index + technical levels |
+| `get_token_ca` | FREE | Look up any token's contract address by name |
+| `get_status` | FREE | Server health check |
+
+> These are **proprietary signals** — not available from any other MCP server or public API. Built from real-time Solana DEX data processed by 12 AI simulation agents.
+
+---
+
+## Quick Start (2 minutes)
+
+### Prerequisites
+- [Node.js](https://nodejs.org) v18+
+- [Claude Desktop](https://claude.ai/download)
+- Solana wallet with **$1-5 USDC** (no SOL needed — Dexter sponsors gas)
+
+### Install
 
 ```bash
 npm install -g cryptoiz-mcp
 npx cryptoiz-mcp-setup YOUR_SOLANA_PRIVATE_KEY
 ```
 
-Auto-detects OS, finds Claude Desktop config (including Windows MSIX), writes correct config. Restart Claude Desktop and type `get_status`.
+Restart Claude Desktop. Type `get_status` to verify.
 
-## Prerequisites
+> **Tip:** Use a dedicated wallet with small USDC balance. Your private key is stored locally only — never sent to our servers.
 
-1. **Node.js** v18+ from nodejs.org
-2. **Claude Desktop** from claude.ai/download
-3. **Solana wallet** with $1-5 USDC (no SOL needed, Dexter sponsors gas)
+---
 
-## Tools and Pricing
+## How It Works
 
-| Tool | Price | Data |
-|------|-------|------|
-| get_alpha_scanner | $0.05 | 20 smart money whale/dolphin signals |
-| get_divergence | $0.02 | 20 divergence signals (3 types) |
-| get_accumulation | $0.02 | 20 tokens with 4D scoring |
-| get_btc_regime | $0.01 | BTC macro + Fear/Greed + technicals |
-| get_token_ca | FREE | Contract address lookup |
-| get_status | FREE | Server health check |
+```
+You ask Claude --> CryptoIZ MCP --> x402 USDC payment --> Solana DEX data --> AI analysis --> Response
+```
 
-## Manual Config (if auto-installer fails)
+1. You ask Claude for trading signals (e.g. "show me alpha scanner")
+2. MCP server sends x402 payment request (USDC on Solana)
+3. Dexter facilitator sponsors the gas — you only pay the tool price
+4. Our AI scanners process real-time Solana DEX data
+5. Claude displays the results with actionable insights
 
-### macOS
-Config: ~/Library/Application Support/Claude/claude_desktop_config.json
+**No subscription. No API dashboard. No monthly fee.** You pay only when you use a tool.
+
+---
+
+## Configuration
+
+### macOS / Linux
+Config: `~/Library/Application Support/Claude/claude_desktop_config.json`
 
 ```json
 {
@@ -48,13 +82,13 @@ Config: ~/Library/Application Support/Claude/claude_desktop_config.json
 ```
 
 ### Windows
-IMPORTANT: npx does NOT work on Windows. Use absolute paths.
+**Important:** `npx` does NOT work on Windows. Use absolute paths.
 
 Config location depends on install type:
-- MSIX (most common): %LOCALAPPDATA%\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude\claude_desktop_config.json
-- Standard: %APPDATA%\Claude\claude_desktop_config.json
+- **MSIX** (most common): `%LOCALAPPDATA%\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude\claude_desktop_config.json`
+- **Standard**: `%APPDATA%\Claude\claude_desktop_config.json`
 
-Check: run `dir "$env:LOCALAPPDATA\Packages\Claude*"` in PowerShell. If folder exists = MSIX.
+Check which one: run `dir "$env:LOCALAPPDATA\Packages\Claude*"` in PowerShell.
 
 ```json
 {
@@ -70,28 +104,55 @@ Check: run `dir "$env:LOCALAPPDATA\Packages\Claude*"` in PowerShell. If folder e
 }
 ```
 
+### Cursor / Windsurf / VS Code
+Same config format — add to your MCP settings file.
+
+---
+
 ## Troubleshooting
 
-**"No servers added" after setup:**
-Config written to wrong path. Windows MSIX reads from LocalAppData, not AppData. Copy:
-```powershell
-copy "$env:APPDATA\Claude\claude_desktop_config.json" "$env:LOCALAPPDATA\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude\claude_desktop_config.json"
-```
+| Problem | Solution |
+|---------|----------|
+| "No servers added" | Windows MSIX reads from LocalAppData. Run: `copy "$env:APPDATA\Claude\claude_desktop_config.json" "$env:LOCALAPPDATA\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude\claude_desktop_config.json"` |
+| "spawn npx ENOENT" | Windows only — use absolute paths to node.exe + index.js (see config above) |
+| Server disconnected | Restart Claude Desktop (or full PC restart) |
+| Payment failed | Check USDC balance in wallet. Minimum $0.05 needed. No SOL required. |
 
-**"spawn npx ENOENT" on Windows:**
-Use absolute paths, not npx. See Windows config above.
-
-**Server disconnected:**
-Check logs: Get-Content "$env:APPDATA\Claude\logs\mcp-server-cryptoiz.log" -Tail 30
+---
 
 ## Security
 
-Private key stored only in local config. Never sent to CryptoIZ. Gas sponsored by Dexter. Use a dedicated wallet.
+- **Private key** stored only in your local Claude Desktop config file
+- **Never transmitted** to CryptoIZ servers — payment handled on-chain via x402
+- **Gas sponsored** by Dexter facilitator — you only pay the tool price in USDC
+- **Recommendation:** Use a dedicated wallet with small balance ($5-10)
+
+---
+
+## About CryptoIZ
+
+CryptoIZ is an AI-powered Solana DEX trading intelligence platform. Our signals are generated by 12 AI simulation agents running 8 scalp formulas and 4 swing formulas, processing real-time on-chain data.
+
+**What makes us different:**
+- Proprietary whale/dolphin accumulation detection — not available anywhere else
+- Phase engine labeling ACCUMULATION/MARKUP/DISTRIBUTION/MARKDOWN cycles
+- Smart money scoring combining holder analysis, volume patterns, and price structure
+- Battle-tested with on-chain settlements via Dexter on Solana mainnet
+
+---
 
 ## Links
 
-- Guide: https://cryptoiz.org/McpLanding
-- Platform: https://cryptoiz.org
-- Dexter: https://dexter.cash/sellers/DsKmdkYx49Xc1WhqMUAztwhdYPTqieyC98VmnnJdgpXX
-- Twitter: @cryptoiz_IDN
-- npm: https://www.npmjs.com/package/cryptoiz-mcp
+- **Website:** [cryptoiz.org](https://cryptoiz.org)
+- **MCP Guide:** [cryptoiz.org/McpLanding](https://cryptoiz.org/McpLanding)
+- **npm:** [npmjs.com/package/cryptoiz-mcp](https://www.npmjs.com/package/cryptoiz-mcp)
+- **Twitter:** [@cryptoiz_IDN](https://twitter.com/cryptoiz_IDN)
+- **Dexter:** [dexter.cash](https://dexter.cash/sellers/DsKmdkYx49Xc1WhqMUAztwhdYPTqieyC98VmnnJdgpXX)
+- **x402 Ecosystem:** [x402.org](https://x402.org)
+- **Support:** [Open an issue](https://github.com/dadang11/cryptoiz-mcp/issues) or DM [@cryptoiz_IDN](https://twitter.com/cryptoiz_IDN)
+
+---
+
+## License
+
+MIT
