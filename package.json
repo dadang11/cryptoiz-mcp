@@ -1,0 +1,42 @@
+{
+  "name": "cryptoiz-mcp",
+  "version": "4.15.12",
+  "description": "CryptoIZ MCP Server - Solana DEX trading signals via Claude Desktop with x402 USDC micropayments (V2 Dexter facilitator)",
+  "main": "index.js",
+  "type": "module",
+  "bin": {
+    "cryptoiz-mcp": "./index.js",
+    "cryptoiz-mcp-setup": "./setup.js"
+  },
+  "files": [
+    "index.js",
+    "setup.js",
+    "package.json",
+    "README.md"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "@solana/web3.js": "^1.95.8",
+    "bs58": "^6.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "claude",
+    "solana",
+    "crypto",
+    "trading",
+    "x402",
+    "usdc",
+    "dexter"
+  ],
+  "author": "CryptoIZ",
+  "license": "MIT",
+  "homepage": "https://cryptoiz.org/McpLanding",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dadang11/cryptoiz-mcp"
+  }
+}
