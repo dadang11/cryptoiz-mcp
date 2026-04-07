@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// CryptoIZ MCP Server v4.15.0
+// CryptoIZ MCP Server v4.15.14
+// Whale Intelligence Suite: 6 paid tools + 2 free
 // x402 V2: Dexter facilitator (gas sponsored) + V1 backward compat
 // ZERO template literals — Windows PowerShell safe
 
@@ -9,14 +10,20 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprot
 import { Connection, Keypair, PublicKey, Transaction, SystemProgram, VersionedTransaction, TransactionMessage } from '@solana/web3.js';
 import bs58 from 'bs58';
 
-var VERSION = 'v4.15.13';
+var VERSION = 'v4.15.14';
 var GATEWAY = 'https://rehqwsypjnjirhuiapqh.supabase.co/functions/v1/mcp-x402-gateway';
 // Per-tool endpoints for Dexter settlement naming
 var TOOL_ENDPOINTS = {
+  get_whale_alpha: 'https://rehqwsypjnjirhuiapqh.supabase.co/functions/v1/mcp-alpha-scanner',
+  get_whale_divergence: 'https://rehqwsypjnjirhuiapqh.supabase.co/functions/v1/mcp-divergence',
+  get_whale_accumulation: 'https://rehqwsypjnjirhuiapqh.supabase.co/functions/v1/mcp-accumulation',
+  get_whale_neutral: 'https://rehqwsypjnjirhuiapqh.supabase.co/functions/v1/mcp-neutral',
+  get_whale_distribution: 'https://rehqwsypjnjirhuiapqh.supabase.co/functions/v1/mcp-distribution',
+  get_btc_regime: 'https://rehqwsypjnjirhuiapqh.supabase.co/functions/v1/mcp-btc-regime',
+  // Backward compat: old names -> same proxy endpoints
   get_alpha_scanner: 'https://rehqwsypjnjirhuiapqh.supabase.co/functions/v1/mcp-alpha-scanner',
   get_divergence: 'https://rehqwsypjnjirhuiapqh.supabase.co/functions/v1/mcp-divergence',
   get_accumulation: 'https://rehqwsypjnjirhuiapqh.supabase.co/functions/v1/mcp-accumulation',
-  get_btc_regime: 'https://rehqwsypjnjirhuiapqh.supabase.co/functions/v1/mcp-btc-regime',
 };
 var RECIPIENT = 'DsKmdkYx49Xc1WhqMUAztwhdYPTqieyC98VmnnJdgpXX';
 var USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
@@ -48,12 +55,6 @@ function findATA(wallet, mint) {
 }
 
 // ===== V2: Build partially-signed tx for Dexter facilitator =====
-// Reference: @x402/svm exact/client/scheme.ts (Coinbase reference SDK)
-// Tx MUST contain exactly 4 instructions in this order:
-//   1. SetComputeUnitLimit (20000)
-//   2. SetComputeUnitPrice (1 microLamport)
-//   3. TransferChecked (SPL Token)
-//   4. Memo (random 16-byte nonce hex)
 var COMPUTE_BUDGET_PROGRAM = 'ComputeBudget111111111111111111111111111111';
 var MEMO_PROGRAM = 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr';
 
@@ -69,21 +70,17 @@ async function buildV2PaymentPayload(amount, feePayerAddr) {
   var tokenProgramPk = new PublicKey(TOKEN_PROGRAM);
   var usdcMintPk = new PublicKey(USDC_MINT);
 
-  // Instruction 1: SetComputeUnitLimit = 20000 (per @x402/svm constants)
   var setLimitData = Buffer.alloc(5);
   setLimitData.writeUInt8(2, 0);
   setLimitData.writeUInt32LE(20000, 1);
   var setLimitIx = { programId: computeBudgetPk, keys: [], data: setLimitData };
 
-  // Instruction 2: SetComputeUnitPrice = 1 microLamport (per @x402/svm constants)
   var setPriceData = Buffer.alloc(9);
   setPriceData.writeUInt8(3, 0);
   setPriceData.writeUInt32LE(1, 1);
   setPriceData.writeUInt32LE(0, 5);
   var setPriceIx = { programId: computeBudgetPk, keys: [], data: setPriceData };
 
-  // Instruction 3: TransferChecked (SPL Token)
-  // Accounts order: [source, mint, destination, authority]
   var transferKeys = [
     { pubkey: userATA, isSigner: false, isWritable: true },
     { pubkey: usdcMintPk, isSigner: false, isWritable: false },
@@ -91,15 +88,14 @@ async function buildV2PaymentPayload(amount, feePayerAddr) {
     { pubkey: kp.publicKey, isSigner: true, isWritable: false },
   ];
   var transferData = Buffer.alloc(10);
-  transferData.writeUInt8(12, 0); // TransferChecked = instruction index 12
+  transferData.writeUInt8(12, 0);
   var lo = amount & 0xFFFFFFFF;
   var hi = Math.floor(amount / 0x100000000) & 0xFFFFFFFF;
   transferData.writeUInt32LE(lo, 1);
   transferData.writeUInt32LE(hi, 5);
-  transferData.writeUInt8(6, 9); // USDC decimals = 6
+  transferData.writeUInt8(6, 9);
   var transferIx = { programId: tokenProgramPk, keys: transferKeys, data: transferData };
 
-  // Instruction 4: Memo with random 16-byte nonce (per @x402/svm reference)
   var nonceBytes = new Uint8Array(16);
   for (var i = 0; i < 16; i++) { nonceBytes[i] = Math.floor(Math.random() * 256); }
   var nonceHex = '';
@@ -110,10 +106,8 @@ async function buildV2PaymentPayload(amount, feePayerAddr) {
   var memoData = Buffer.from(nonceHex, 'utf8');
   var memoIx = { programId: memoProgramPk, keys: [], data: memoData };
 
-  // Get recent blockhash
   var bhResult = await conn.getLatestBlockhash('confirmed');
 
-  // Build V0 message: feePayer = Dexter, 4 instructions in spec order
   var message = new TransactionMessage({
     payerKey: feePayerPk,
     recentBlockhash: bhResult.blockhash,
@@ -121,8 +115,6 @@ async function buildV2PaymentPayload(amount, feePayerAddr) {
   }).compileToV0Message();
 
   var vtx = new VersionedTransaction(message);
-
-  // Partially sign with user keypair only (Dexter signs as feePayer later)
   vtx.sign([kp]);
 
   var serialized = vtx.serialize();
@@ -187,10 +179,11 @@ async function callTool(toolName, args) {
     queryParts.push('tool=' + toolName);
   }
 
-  if (toolName === 'get_divergence' && args && args.timeframe) {
+  // Handle timeframe for divergence tools (new and old name)
+  if ((toolName === 'get_whale_divergence' || toolName === 'get_divergence') && args && args.timeframe) {
     queryParts.push('tf=' + args.timeframe);
   }
-  if (toolName === 'get_token_ca' && args && args.name) {
+  if ((toolName === 'get_token_ca') && args && args.name) {
     queryParts.push('name=' + encodeURIComponent(args.name));
   }
 
@@ -253,14 +246,11 @@ async function callTool(toolName, args) {
   var headerName = '';
 
   if (useV2 && paymentRequirements.extra && paymentRequirements.extra.feePayer) {
-    // V2: Build partially-signed tx with 4 instructions, Dexter pays gas
     var v2FeePayer = paymentRequirements.extra.feePayer;
     console.error('[cryptoiz-mcp] V2 mode: 4-ix tx (Limit+Price+TransferChecked+Memo), feePayer=' + v2FeePayer.substring(0, 8) + '...');
     try {
       var txB64 = await buildV2PaymentPayload(amount, v2FeePayer);
 
-      // Payload per @x402/svm facilitator: must include 'accepted' field
-      // Facilitator verify() checks payload.accepted.scheme and payload.accepted.network
       var v2Payload = {
         x402Version: 2,
         accepted: {
@@ -280,12 +270,10 @@ async function callTool(toolName, args) {
       useV2 = false;
     }
   } else {
-    // No feePayer in requirements — force V1
     useV2 = false;
   }
 
   if (!useV2) {
-    // V1 fallback: send USDC on-chain, then pass signature
     console.error('[cryptoiz-mcp] V1 mode: sending USDC on-chain...');
     var sig = await sendUSDC(amount);
     console.error('[cryptoiz-mcp] V1 TX confirmed: ' + sig);
@@ -308,7 +296,6 @@ async function callTool(toolName, args) {
     console.error('[cryptoiz-mcp] Auto-fallback to V1 (sendUSDC on-chain)...');
     
     try {
-      // V1: send USDC on-chain, retry with x-payment
       var fallbackSig = await sendUSDC(amount);
       console.error('[cryptoiz-mcp] V1 fallback TX confirmed: ' + fallbackSig);
       
@@ -327,7 +314,6 @@ async function callTool(toolName, args) {
     throw new Error('Payment failed (' + resp2.status + '): ' + errBody);
   }
 
-  // Read receipt header (V2 or V1)
   var receipt = resp2.headers.get('payment-response') || resp2.headers.get('x-payment-response');
   if (receipt) {
     try {
@@ -345,13 +331,13 @@ async function callTool(toolName, args) {
 // ===== MCP SERVER SETUP =====
 var TOOLS = [
   {
-    name: 'get_alpha_scanner',
-    description: 'Get top 20 smart money alpha signals from CryptoIZ Solana DEX scanner. Shows accumulation patterns, whale/dolphin activity, and entry timing. Cost: $0.05 USDC.',
+    name: 'get_whale_alpha',
+    description: 'Get top 20 smart money alpha signals from CryptoIZ Solana DEX scanner. Shows whale/dolphin accumulation patterns, entry timing, and risk scores. Cost: $0.05 USDC.',
     inputSchema: { type: 'object', properties: {}, required: [] },
   },
   {
-    name: 'get_divergence',
-    description: 'Get divergence signals - hidden accumulation, breakout accumulation, classic divergence between price and smart money. Cost: $0.02 USDC.',
+    name: 'get_whale_divergence',
+    description: 'Get divergence signals - hidden accumulation, breakout accumulation, classic divergence between price and whale activity. Cost: $0.02 USDC.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -361,8 +347,18 @@ var TOOLS = [
     },
   },
   {
-    name: 'get_accumulation',
-    description: 'Get tokens in accumulation phase with holder tier analysis (whale/dolphin/shrimp deltas). Cost: $0.02 USDC.',
+    name: 'get_whale_accumulation',
+    description: 'Get tokens in accumulation phase with holder tier analysis (whale/dolphin/shrimp deltas). Smart money is entering these tokens. Cost: $0.02 USDC.',
+    inputSchema: { type: 'object', properties: {}, required: [] },
+  },
+  {
+    name: 'get_whale_neutral',
+    description: 'Get tokens in neutral phase - no clear accumulation or distribution. Watch for phase transitions. Cost: $0.02 USDC.',
+    inputSchema: { type: 'object', properties: {}, required: [] },
+  },
+  {
+    name: 'get_whale_distribution',
+    description: 'Get tokens in distribution phase - whale selling detected. Smart money is exiting. Consider closing positions or avoiding. Cost: $0.02 USDC.',
     inputSchema: { type: 'object', properties: {}, required: [] },
   },
   {

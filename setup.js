@@ -4,7 +4,7 @@ import path from 'path';
 import os from 'os';
 import { execSync } from 'child_process';
 
-var VERSION = 'v4.15.13';
+var VERSION = 'v4.15.14';
 function print(msg) { process.stdout.write(msg + '\n'); }
 
 function findConfigPath() {
@@ -12,7 +12,6 @@ function findConfigPath() {
   if (p === 'darwin') {
     candidates.push(path.join(os.homedir(), 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json'));
   } else if (p === 'win32') {
-    // MSIX path FIRST (priority) — most Windows Claude Desktop installs are MSIX
     var localAppData = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
     try {
       var packagesDir = path.join(localAppData, 'Packages');
@@ -25,7 +24,6 @@ function findConfigPath() {
         }
       }
     } catch(e) {}
-    // Standard path as fallback
     var appdata = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
     candidates.push(path.join(appdata, 'Claude', 'claude_desktop_config.json'));
   } else {
@@ -76,7 +74,6 @@ function injectConfig(cfgPath, entry) {
   fs.writeFileSync(cfgPath, JSON.stringify(config, null, 2), 'utf8');
 }
 
-// Get private key from command line argument
 var key = (process.argv[2] || '').trim();
 
 print('');
@@ -102,7 +99,6 @@ if (!key) {
   process.exit(1);
 }
 
-// Validate base58
 var chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 if (key.length < 40 || key.length > 100) { print('ERROR: Invalid key length (' + key.length + ' chars). Expected 44-88.'); process.exit(1); }
 for (var i = 0; i < key.length; i++) {
