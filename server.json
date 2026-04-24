@@ -7,13 +7,13 @@
     "url": "https://github.com/dadang11/cryptoiz-mcp",
     "source": "github"
   },
-  "version": "4.15.13",
+  "version": "4.16.0",
   "packages": [
     {
       "registry_type": "npm",
       "registry_base_url": "https://registry.npmjs.org",
       "identifier": "cryptoiz-mcp",
-      "version": "4.15.13",
+      "version": "4.16.0",
       "transport": {
         "type": "stdio"
       },
