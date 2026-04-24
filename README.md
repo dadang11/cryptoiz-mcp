@@ -27,6 +27,7 @@ Auto-detects OS, finds Claude Desktop config (including Windows MSIX), writes co
 | get_whale_neutral | $0.02 | Tokens in neutral phase |
 | get_whale_distribution | $0.02 | Tokens in distribution phase |
 | get_btc_regime | $0.01 | BTC macro + Fear/Greed + technicals |
+| get_btc_futures_signal | $0.03 | MTF BTC futures scalping signal (4h regime + 5m entry) |
 | get_token_ca | FREE | Contract address lookup |
 | get_status | FREE | Server health check |
 
