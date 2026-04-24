@@ -368,6 +368,11 @@ var TOOLS = [
     inputSchema: { type: 'object', properties: {}, required: [] },
   },
   {
+    name: 'get_btc_futures_signal',
+    description: 'BTC futures scalping signal (35x leverage). Multi-timeframe: 4h regime filter (bull/bear) + 5m RSI entry trigger. Returns direction, entry, TP, SL, leverage recommendation, conviction score. Backtested 54% WR, PF 1.67, Sharpe 5.0 on 90d. Cost: $0.03 USDC.',
+    inputSchema: { type: 'object', properties: {}, required: [] },
+  },
+  {
     name: 'get_token_ca',
     description: 'Look up a Solana token contract address by name. FREE - no payment required.',
     inputSchema: {
