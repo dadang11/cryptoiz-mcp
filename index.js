@@ -20,6 +20,7 @@ var TOOL_ENDPOINTS = {
   get_whale_neutral: 'https://rehqwsypjnjirhuiapqh.supabase.co/functions/v1/mcp-neutral',
   get_whale_distribution: 'https://rehqwsypjnjirhuiapqh.supabase.co/functions/v1/mcp-distribution',
   get_btc_regime: 'https://rehqwsypjnjirhuiapqh.supabase.co/functions/v1/mcp-btc-regime',
+  get_btc_futures_signal: 'https://rehqwsypjnjirhuiapqh.supabase.co/functions/v1/mcp-btc-futures',
   // Backward compat: old names -> same proxy endpoints
   get_alpha_scanner: 'https://rehqwsypjnjirhuiapqh.supabase.co/functions/v1/mcp-alpha-scanner',
   get_divergence: 'https://rehqwsypjnjirhuiapqh.supabase.co/functions/v1/mcp-divergence',
