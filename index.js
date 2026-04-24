@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// CryptoIZ MCP Server v4.15.14
+// CryptoIZ MCP Server v4.15.15
 // Whale Intelligence Suite: 6 paid tools + 2 free
 // x402 V2: Dexter facilitator (gas sponsored) + V1 backward compat
 // ZERO template literals — Windows PowerShell safe
@@ -10,7 +10,7 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprot
 import { Connection, Keypair, PublicKey, Transaction, SystemProgram, VersionedTransaction, TransactionMessage } from '@solana/web3.js';
 import bs58 from 'bs58';
 
-var VERSION = 'v4.15.14';
+var VERSION = 'v4.15.15';
 var GATEWAY = 'https://rehqwsypjnjirhuiapqh.supabase.co/functions/v1/mcp-x402-gateway';
 // Per-tool endpoints for Dexter settlement naming
 var TOOL_ENDPOINTS = {
