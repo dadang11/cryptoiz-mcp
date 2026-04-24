@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
   "name": "io.github.dadang11/cryptoiz",
-  "description": "AI-powered Solana DEX smart money signals. Get whale/dolphin accumulation alerts, price-volume divergence detection, alpha scanner with 20 top-scoring tokens, and BTC macro regime analysis. Pay-per-call via x402 USDC on Solana — no subscription, no API key needed.",
+  "description": "v4.16.0 - AI-powered Solana DEX whale intelligence for Claude Desktop. 9 tools: whale alpha/divergence/accumulation/neutral/distribution scanners, BTC macro regime, and NEW BTC Futures Signal (4H+5m MTF scalping). Pay-per-call via x402 USDC on Solana ($0.01-$0.05). No subscription, no API key, gas sponsored by Dexter.",
   "status": "active",
   "repository": {
     "url": "https://github.com/dadang11/cryptoiz-mcp",
