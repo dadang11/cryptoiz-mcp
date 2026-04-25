@@ -1,17 +1,19 @@
 #!/usr/bin/env node
-// CryptoIZ MCP Server v4.16.0
-// Whale Intelligence Suite: 6 paid tools + 2 free
+// CryptoIZ MCP Server v4.16.3
+// Whale Intelligence Suite: 7 paid tools + 2 free
 // x402 V2: Dexter facilitator (gas sponsored) + V1 backward compat
 // ZERO template literals — Windows PowerShell safe
-
+// v4.16.3: Added x-client-version header for server-side update notifications
+//          Removed deprecated DEV_KEY bypass (gateway-side already disabled)
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { Connection, Keypair, PublicKey, Transaction, SystemProgram, VersionedTransaction, TransactionMessage } from '@solana/web3.js';
 import bs58 from 'bs58';
 
-var VERSION = 'v4.16.0';
+var VERSION = 'v4.16.3';
 var GATEWAY = 'https://rehqwsypjnjirhuiapqh.supabase.co/functions/v1/mcp-x402-gateway';
+
 // Per-tool endpoints for Dexter settlement naming
 var TOOL_ENDPOINTS = {
   get_whale_alpha: 'https://rehqwsypjnjirhuiapqh.supabase.co/functions/v1/mcp-alpha-scanner',
@@ -26,13 +28,41 @@ var TOOL_ENDPOINTS = {
   get_divergence: 'https://rehqwsypjnjirhuiapqh.supabase.co/functions/v1/mcp-divergence',
   get_accumulation: 'https://rehqwsypjnjirhuiapqh.supabase.co/functions/v1/mcp-accumulation',
 };
+
 var RECIPIENT = 'DsKmdkYx49Xc1WhqMUAztwhdYPTqieyC98VmnnJdgpXX';
 var USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 var DEXTER_FEE_PAYER = 'DEXVS3su4dZQWTvvPnLDJLRK1CeeKG6K3QqdzthgAkNV';
 var SOL_RPC = 'https://api.mainnet-beta.solana.com';
 var TOKEN_PROGRAM = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
 var ATA_PROGRAM = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL';
-var DEV_KEY = process.env.CRYPTOIZ_DEV_KEY || '';
+
+// ===== Update notification (logged once per session) =====
+var _updateNotified = false;
+function maybeNotifyUpdate(data, headers) {
+  if (_updateNotified) return;
+  if (!data || !data.update_available) {
+    // Also check response headers as fallback
+    if (!headers || headers.get('x-update-available') !== '1') return;
+  }
+  _updateNotified = true;
+  var sev = (data && data.update_severity) || 'unknown';
+  var latest = (data && data.version_latest) || (headers && headers.get('x-server-version')) || '?';
+  var cmd = (data && data.update_command) || 'npx cryptoiz-mcp-setup@latest';
+  var changelog = (data && data.changelog_url) || '';
+  console.error('');
+  console.error('[cryptoiz-mcp] ============================================');
+  console.error('[cryptoiz-mcp]  UPDATE AVAILABLE: ' + VERSION + ' -> ' + latest);
+  console.error('[cryptoiz-mcp]  Severity: ' + sev);
+  if (data && data.update_message) {
+    console.error('[cryptoiz-mcp]  ' + data.update_message);
+  }
+  console.error('[cryptoiz-mcp]  To update: ' + cmd);
+  if (changelog) {
+    console.error('[cryptoiz-mcp]  Changelog: ' + changelog);
+  }
+  console.error('[cryptoiz-mcp] ============================================');
+  console.error('');
+}
 
 function getKeypair() {
   var privKey = process.env.SVM_PRIVATE_KEY;
@@ -62,7 +92,6 @@ var MEMO_PROGRAM = 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr';
 async function buildV2PaymentPayload(amount, feePayerAddr) {
   var kp = getKeypair();
   var conn = new Connection(SOL_RPC, 'confirmed');
-
   var userATA = findATA(kp.publicKey.toBase58(), USDC_MINT);
   var recipientATA = findATA(RECIPIENT, USDC_MINT);
   var feePayerPk = new PublicKey(feePayerAddr);
@@ -70,18 +99,15 @@ async function buildV2PaymentPayload(amount, feePayerAddr) {
   var memoProgramPk = new PublicKey(MEMO_PROGRAM);
   var tokenProgramPk = new PublicKey(TOKEN_PROGRAM);
   var usdcMintPk = new PublicKey(USDC_MINT);
-
   var setLimitData = Buffer.alloc(5);
   setLimitData.writeUInt8(2, 0);
   setLimitData.writeUInt32LE(20000, 1);
   var setLimitIx = { programId: computeBudgetPk, keys: [], data: setLimitData };
-
   var setPriceData = Buffer.alloc(9);
   setPriceData.writeUInt8(3, 0);
   setPriceData.writeUInt32LE(1, 1);
   setPriceData.writeUInt32LE(0, 5);
   var setPriceIx = { programId: computeBudgetPk, keys: [], data: setPriceData };
-
   var transferKeys = [
     { pubkey: userATA, isSigner: false, isWritable: true },
     { pubkey: usdcMintPk, isSigner: false, isWritable: false },
@@ -96,7 +122,6 @@ async function buildV2PaymentPayload(amount, feePayerAddr) {
   transferData.writeUInt32LE(hi, 5);
   transferData.writeUInt8(6, 9);
   var transferIx = { programId: tokenProgramPk, keys: transferKeys, data: transferData };
-
   var nonceBytes = new Uint8Array(16);
   for (var i = 0; i < 16; i++) { nonceBytes[i] = Math.floor(Math.random() * 256); }
   var nonceHex = '';
@@ -106,21 +131,16 @@ async function buildV2PaymentPayload(amount, feePayerAddr) {
   }
   var memoData = Buffer.from(nonceHex, 'utf8');
   var memoIx = { programId: memoProgramPk, keys: [], data: memoData };
-
   var bhResult = await conn.getLatestBlockhash('confirmed');
-
   var message = new TransactionMessage({
     payerKey: feePayerPk,
     recentBlockhash: bhResult.blockhash,
     instructions: [setLimitIx, setPriceIx, transferIx, memoIx],
   }).compileToV0Message();
-
   var vtx = new VersionedTransaction(message);
   vtx.sign([kp]);
-
   var serialized = vtx.serialize();
   var txB64 = Buffer.from(serialized).toString('base64');
-
   console.error('[cryptoiz-mcp] V2 tx: 4 ix (Limit=20000 + Price=1 + TransferChecked + Memo), feePayer=' + feePayerAddr.substring(0, 8) + '..., nonce=' + nonceHex.substring(0, 8) + '...');
   return txB64;
 }
@@ -129,30 +149,25 @@ async function buildV2PaymentPayload(amount, feePayerAddr) {
 async function sendUSDC(amount) {
   var kp = getKeypair();
   var conn = new Connection(SOL_RPC, 'confirmed');
-
   var userATA = findATA(kp.publicKey.toBase58(), USDC_MINT);
   var recipientATA = findATA(RECIPIENT, USDC_MINT);
-
   var tokenProgramPk = new PublicKey(TOKEN_PROGRAM);
   var keys = [
     { pubkey: userATA, isSigner: false, isWritable: true },
     { pubkey: recipientATA, isSigner: false, isWritable: true },
     { pubkey: kp.publicKey, isSigner: true, isWritable: false },
   ];
-
   var data = Buffer.alloc(9);
   data.writeUInt8(3, 0);
   var lo = amount & 0xFFFFFFFF;
   var hi = Math.floor(amount / 0x100000000) & 0xFFFFFFFF;
   data.writeUInt32LE(lo, 1);
   data.writeUInt32LE(hi, 5);
-
   var transferIx = {
     programId: tokenProgramPk,
     keys: keys,
     data: data,
   };
-
   var bhResult = await conn.getLatestBlockhash('confirmed');
   var tx = new Transaction({
     feePayer: kp.publicKey,
@@ -161,11 +176,25 @@ async function sendUSDC(amount) {
   });
   tx.add(transferIx);
   tx.sign(kp);
-
   var rawTx = tx.serialize();
   var sig = await conn.sendRawTransaction(rawTx, { skipPreflight: false });
-  await conn.confirmTransaction({ signature: sig, blockhash: bhResult.blockhash, lastValidBlockHeight: bhResult.lastValidBlockHeight }, 'confirmed');
+  await conn.confirmTransaction({
+    signature: sig,
+    blockhash: bhResult.blockhash,
+    lastValidBlockHeight: bhResult.lastValidBlockHeight
+  }, 'confirmed');
   return sig;
+}
+
+// ===== Headers helper: every gateway request carries x-client-version =====
+function clientHeaders(extra) {
+  // Strip leading 'v' for cleanliness — gateway accepts both
+  var v = VERSION.replace(/^v/i, '');
+  var h = { 'x-client-version': v };
+  if (extra) {
+    for (var k in extra) { if (Object.prototype.hasOwnProperty.call(extra, k)) h[k] = extra[k]; }
+  }
+  return h;
 }
 
 // ===== TOOL CALL HANDLER =====
@@ -184,26 +213,20 @@ async function callTool(toolName, args) {
   if ((toolName === 'get_whale_divergence' || toolName === 'get_divergence') && args && args.timeframe) {
     queryParts.push('tf=' + args.timeframe);
   }
+
   if ((toolName === 'get_token_ca') && args && args.name) {
     queryParts.push('name=' + encodeURIComponent(args.name));
   }
 
   var url = queryParts.length > 0 ? baseUrl + '?' + queryParts.join('&') : baseUrl;
 
-  // Dev mode bypass
-  if (DEV_KEY) {
-    var devResp = await fetch(url, { headers: { 'x-dev-key': DEV_KEY } });
-    var devData = await devResp.json();
-    return devData;
-  }
-
   // Step 1: Fetch gateway — expect 402 or 200 (free tools)
-  var resp1 = await fetch(url);
-
+  var resp1 = await fetch(url, { headers: clientHeaders() });
   if (resp1.status === 200) {
-    return await resp1.json();
+    var data200 = await resp1.json();
+    maybeNotifyUpdate(data200, resp1.headers);
+    return data200;
   }
-
   if (resp1.status !== 402) {
     var errText = await resp1.text();
     throw new Error('Gateway error ' + resp1.status + ': ' + errText);
@@ -240,6 +263,7 @@ async function callTool(toolName, args) {
   var amount = parseInt(paymentRequirements.maxAmountRequired || paymentRequirements.amount || '10000');
   var displayAmount = (amount / 1000000).toFixed(4);
   var hasFeePayer = paymentRequirements.extra && paymentRequirements.extra.feePayer;
+
   console.error('[cryptoiz-mcp] Payment required: ' + displayAmount + ' USDC for ' + toolName + (hasFeePayer ? ' (V2 Dexter)' : ' (V1 self-pay)'));
 
   // Step 3: Build and send payment
@@ -251,7 +275,6 @@ async function callTool(toolName, args) {
     console.error('[cryptoiz-mcp] V2 mode: 4-ix tx (Limit+Price+TransferChecked+Memo), feePayer=' + v2FeePayer.substring(0, 8) + '...');
     try {
       var txB64 = await buildV2PaymentPayload(amount, v2FeePayer);
-
       var v2Payload = {
         x402Version: 2,
         accepted: {
@@ -262,7 +285,6 @@ async function callTool(toolName, args) {
           transaction: txB64,
         },
       };
-
       paymentHeader = Buffer.from(JSON.stringify(v2Payload)).toString('base64');
       headerName = 'payment-signature';
       console.error('[cryptoiz-mcp] V2 tx ready, sending via payment-signature header');
@@ -278,32 +300,27 @@ async function callTool(toolName, args) {
     console.error('[cryptoiz-mcp] V1 mode: sending USDC on-chain...');
     var sig = await sendUSDC(amount);
     console.error('[cryptoiz-mcp] V1 TX confirmed: ' + sig);
-
     var v1Payload = { signature: sig };
     paymentHeader = Buffer.from(JSON.stringify(v1Payload)).toString('base64');
     headerName = 'x-payment';
   }
 
   // Step 4: Retry with payment header
-  var headers2 = {};
-  headers2[headerName] = paymentHeader;
-
-  var resp2 = await fetch(url, { headers: headers2 });
+  var headers2obj = {};
+  headers2obj[headerName] = paymentHeader;
+  var resp2 = await fetch(url, { headers: clientHeaders(headers2obj) });
 
   // V2 settle failed? Auto-fallback to V1
   if (resp2.status !== 200 && useV2) {
     var v2ErrBody = await resp2.text();
     console.error('[cryptoiz-mcp] V2 settle failed (' + resp2.status + '): ' + v2ErrBody.substring(0, 200));
     console.error('[cryptoiz-mcp] Auto-fallback to V1 (sendUSDC on-chain)...');
-    
     try {
       var fallbackSig = await sendUSDC(amount);
       console.error('[cryptoiz-mcp] V1 fallback TX confirmed: ' + fallbackSig);
-      
       var v1FallbackPayload = { signature: fallbackSig };
       var v1FallbackHeader = Buffer.from(JSON.stringify(v1FallbackPayload)).toString('base64');
-      
-      resp2 = await fetch(url, { headers: { 'x-payment': v1FallbackHeader } });
+      resp2 = await fetch(url, { headers: clientHeaders({ 'x-payment': v1FallbackHeader }) });
     } catch(fallbackErr) {
       console.error('[cryptoiz-mcp] V1 fallback also failed: ' + fallbackErr.message);
       throw new Error('V2 failed (' + v2ErrBody.substring(0, 100) + '), V1 fallback also failed: ' + fallbackErr.message);
@@ -326,6 +343,7 @@ async function callTool(toolName, args) {
   }
 
   var data = await resp2.json();
+  maybeNotifyUpdate(data, resp2.headers);
   return data;
 }
 
@@ -402,7 +420,6 @@ server.setRequestHandler(ListToolsRequestSchema, async function() {
 server.setRequestHandler(CallToolRequestSchema, async function(request) {
   var toolName = request.params.name;
   var args = request.params.arguments || {};
-
   try {
     var result = await callTool(toolName, args);
     return {
