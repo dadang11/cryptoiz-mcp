@@ -1,6 +1,15 @@
 # CryptoIZ MCP Server
 
+[![npm version](https://img.shields.io/npm/v/cryptoiz-mcp.svg?style=flat-square&color=00d4ff)](https://www.npmjs.com/package/cryptoiz-mcp) [![Latest release](https://img.shields.io/github/v/release/dadang11/cryptoiz-mcp?style=flat-square&color=8b5cf6&label=release)](https://github.com/dadang11/cryptoiz-mcp/releases/latest) [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
+
 AI-powered Solana DEX whale intelligence for Claude Desktop. Pay per call with USDC on Solana via x402 Dexter protocol.
+
+> **What's new in v4.16.3** (Apr 2026)
+> - **Auto-update notifications** — your MCP server now tells you when a new version is published
+> - **Dynamic version detection** — gateway reads the latest version from npm registry (no manual sync)
+> - **Security hardening** — full audit logging + automated abuse detection with email alerts
+>
+> [Read full release notes →](https://github.com/dadang11/cryptoiz-mcp/releases/tag/v4.16.3)
 
 ## Quick Install (2 commands)
 
@@ -10,6 +19,14 @@ npx cryptoiz-mcp-setup YOUR_SOLANA_PRIVATE_KEY
 ```
 
 Auto-detects OS, finds Claude Desktop config (including Windows MSIX), writes correct config. Restart Claude Desktop and type `get_status`.
+
+### Already installed an older version?
+
+```bash
+npm install -g cryptoiz-mcp@latest
+```
+
+Then restart Claude Desktop. v4.16.3 is fully backward-compatible with v4.15.x and v4.16.x — no breaking changes.
 
 ## Prerequisites
 
@@ -29,7 +46,7 @@ Auto-detects OS, finds Claude Desktop config (including Windows MSIX), writes co
 | get_btc_regime | $0.01 | BTC macro + Fear/Greed + technicals |
 | get_btc_futures_signal | $0.03 | MTF BTC futures scalping signal (4h regime + 5m entry) |
 | get_token_ca | FREE | Contract address lookup |
-| get_status | FREE | Server health check |
+| get_status | FREE | Server health check + update info |
 
 ## Manual Config (if auto-installer fails)
 
@@ -91,6 +108,8 @@ Check logs: Get-Content "$env:APPDATA\Claude\logs\mcp-server-cryptoiz.log" -Tail
 
 Private key stored only in local config. Never sent to CryptoIZ. Gas sponsored by Dexter. Use a dedicated wallet.
 
+All paid tool endpoints log every call (IP, version, status) for abuse detection. Automated monitoring runs every 15 minutes.
+
 ## Links
 
 - Guide: https://cryptoiz.org/McpLanding
@@ -98,3 +117,4 @@ Private key stored only in local config. Never sent to CryptoIZ. Gas sponsored b
 - Dexter: https://dexter.cash/sellers/DsKmdkYx49Xc1WhqMUAztwhdYPTqieyC98VmnnJdgpXX
 - Twitter: @cryptoiz_IDN
 - npm: https://www.npmjs.com/package/cryptoiz-mcp
+- Releases: https://github.com/dadang11/cryptoiz-mcp/releases
