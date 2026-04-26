@@ -1,132 +1,51 @@
-#!/usr/bin/env node
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
-import { execSync } from 'child_process';
+'use strict';
+var VERSION = 'v4.16.7';
+var fs = require('fs');
+var os = require('os');
+var path = require('path');
 
-var VERSION = 'v4.15.14';
-function print(msg) { process.stdout.write(msg + '\n'); }
-
-function findConfigPath() {
-  var p = os.platform(), candidates = [];
-  if (p === 'darwin') {
-    candidates.push(path.join(os.homedir(), 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json'));
-  } else if (p === 'win32') {
-    var localAppData = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
-    try {
-      var packagesDir = path.join(localAppData, 'Packages');
-      if (fs.existsSync(packagesDir)) {
-        var dirs = fs.readdirSync(packagesDir);
-        for (var i = 0; i < dirs.length; i++) {
-          if (dirs[i].startsWith('Claude_')) {
-            candidates.push(path.join(packagesDir, dirs[i], 'LocalCache', 'Roaming', 'Claude', 'claude_desktop_config.json'));
-          }
-        }
-      }
-    } catch(e) {}
-    var appdata = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
-    candidates.push(path.join(appdata, 'Claude', 'claude_desktop_config.json'));
-  } else {
-    candidates.push(path.join(os.homedir(), '.config', 'Claude', 'claude_desktop_config.json'));
-  }
-  for (var j = 0; j < candidates.length; j++) {
-    if (fs.existsSync(candidates[j])) return candidates[j];
-  }
-  return candidates[0] || null;
-}
-
-function findPackagePath() {
-  if (os.platform() !== 'win32') return null;
-  var prefix = '';
-  try { prefix = execSync('npm config get prefix', { encoding: 'utf8' }).trim(); } catch(e) {
-    prefix = path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'), 'npm');
-  }
-  var c = [
-    path.join(prefix, 'node_modules', 'cryptoiz-mcp', 'index.js'),
-    path.join(prefix, 'lib', 'node_modules', 'cryptoiz-mcp', 'index.js'),
-  ];
-  for (var i = 0; i < c.length; i++) { if (fs.existsSync(c[i])) return c[i]; }
-  return null;
-}
-
-function buildEntry(key) {
-  if (os.platform() === 'win32') {
-    var pkgPath = findPackagePath();
-    if (!pkgPath) { print('ERROR: Run npm install -g cryptoiz-mcp first'); process.exit(1); }
-    return { command: process.execPath, args: [pkgPath], env: { SVM_PRIVATE_KEY: key } };
-  }
-  return { command: 'npx', args: ['-y', 'cryptoiz-mcp@' + VERSION.replace('v','')], env: { SVM_PRIVATE_KEY: key } };
-}
-
-function injectConfig(cfgPath, entry) {
-  var config = {};
-  if (fs.existsSync(cfgPath)) {
-    try { config = JSON.parse(fs.readFileSync(cfgPath, 'utf8')); } catch(e) {
-      fs.copyFileSync(cfgPath, cfgPath + '.backup.' + Date.now());
-      print('Config had error. Backup created.');
-    }
-  }
-  if (!config.mcpServers) config.mcpServers = {};
-  if (config.mcpServers.cryptoiz) print('Updating existing CryptoIZ entry...');
-  config.mcpServers.cryptoiz = entry;
-  var dir = path.dirname(cfgPath);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(cfgPath, JSON.stringify(config, null, 2), 'utf8');
-}
-
-var key = (process.argv[2] || '').trim();
-
-print('');
-print('========================================');
-print('  CryptoIZ MCP Installer ' + VERSION);
-print('========================================');
-print('OS: ' + os.platform() + ' ' + os.arch());
-
-if (!key) {
-  print('');
-  print('Usage:');
-  print('  npx cryptoiz-mcp-setup YOUR_PRIVATE_KEY');
-  print('');
-  print('Example:');
-  print('  npx cryptoiz-mcp-setup 5MaiiCavjCmn9Hs1o...');
-  print('');
-  print('SECURITY:');
-  print('- Use a DEDICATED wallet (not main wallet)');
-  print('- Fund with $1-5 USDC only, no SOL needed');
-  print('- Export: Phantom > Settings > Security > Export Private Key');
-  print('');
-  print('Guide: cryptoiz.org/McpLanding');
+var privKey = process.argv[2];
+if (!privKey) {
+  console.log('Usage: npx cryptoiz-mcp-setup YOUR_SOLANA_PRIVATE_KEY');
   process.exit(1);
 }
 
-var chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-if (key.length < 40 || key.length > 100) { print('ERROR: Invalid key length (' + key.length + ' chars). Expected 44-88.'); process.exit(1); }
-for (var i = 0; i < key.length; i++) {
-  if (chars.indexOf(key[i]) === -1) { print('ERROR: Invalid base58 character at position ' + i + ': "' + key[i] + '"'); process.exit(1); }
+var config = {
+  mcpServers: {
+    cryptoiz: {
+      command: 'C:\\Program Files\\nodejs\\node.exe',
+      args: [require.resolve('./index.js')],
+      env: { SVM_PRIVATE_KEY: privKey }
+    }
+  }
+};
+
+var configPaths = [
+  path.join(process.env.LOCALAPPDATA || '', 'Packages', 'Claude_pzs8sxrjxfjjc', 'LocalCache', 'Roaming', 'Claude', 'claude_desktop_config.json'),
+  path.join(process.env.APPDATA || '', 'Claude', 'claude_desktop_config.json'),
+  path.join(os.homedir(), 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json'),
+];
+
+var written = false;
+for (var i = 0; i < configPaths.length; i++) {
+  var p = configPaths[i];
+  try {
+    var dir = path.dirname(p);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    var existing = {};
+    if (fs.existsSync(p)) {
+      try { existing = JSON.parse(fs.readFileSync(p, 'utf8')); } catch(_e) {}
+    }
+    existing.mcpServers = existing.mcpServers || {};
+    existing.mcpServers.cryptoiz = config.mcpServers.cryptoiz;
+    fs.writeFileSync(p, JSON.stringify(existing, null, 2), 'utf8');
+    console.log('Config written to: ' + p);
+    written = true;
+  } catch(_e) {}
 }
 
-var cfgPath = findConfigPath();
-if (!cfgPath) { print('ERROR: Claude Desktop not found.'); process.exit(1); }
-print('Config: ' + cfgPath);
-
-if (os.platform() === 'win32') {
-  print('[Windows] absolute paths mode');
-  var pkg = findPackagePath();
-  if (!pkg) { print('Run: npm install -g cryptoiz-mcp'); process.exit(1); }
-  print('Node: ' + process.execPath);
-  print('Package: ' + pkg);
+if (written) {
+  console.log('Done! Restart Claude Desktop to activate CryptoIZ MCP.');
+} else {
+  console.log('Could not write config. Please manually add config to Claude Desktop settings.');
 }
-
-injectConfig(cfgPath, buildEntry(key));
-
-print('');
-print('SETUP COMPLETE!');
-print('Config: ' + cfgPath);
-print('');
-print('Next:');
-print('1. Close Claude Desktop completely');
-print('2. Reopen Claude Desktop');
-print('3. Type: get_status');
-print('');
-print('Guide: cryptoiz.org/McpLanding');
-print('');

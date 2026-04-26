@@ -1,10 +1,9 @@
 {
   "name": "cryptoiz-mcp",
-  "version": "4.16.6",
-  "mcpName": "io.github.dadang11/cryptoiz",
-  "description": "CryptoIZ MCP Server - Solana DEX whale intelligence via Claude Desktop with x402 USDC micropayments (V2 Dexter facilitator)",
+  "version": "4.16.13",
+  "description": "CryptoIZ MCP Server - Solana DEX whale intelligence via Claude Desktop with x402 USDC micropayments",
   "main": "index.js",
-  "type": "module",
+  "type": "commonjs",
   "bin": {
     "cryptoiz-mcp": "./index.js",
     "cryptoiz-mcp-setup": "./setup.js"
@@ -23,31 +22,10 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "keywords": [
-    "mcp",
-    "mcp-server",
-    "claude",
-    "solana",
-    "crypto",
-    "trading",
-    "x402",
-    "usdc",
-    "dexter",
-    "whale-tracking",
-    "whale-intelligence",
-    "smart-money",
-    "alpha-signals",
-    "divergence",
-    "accumulation",
-    "distribution",
-    "defi",
-    "dex"
-  ],
   "author": "CryptoIZ",
   "license": "MIT",
-  "homepage": "https://cryptoiz.org/McpLanding",
   "repository": {
     "type": "git",
-    "url": "https://github.com/dadang11/cryptoiz-mcp"
+    "url": "git+https://github.com/dadang11/cryptoiz-mcp.git"
   }
 }
