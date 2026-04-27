@@ -1,6 +1,6 @@
 {
   "name": "cryptoiz-mcp",
-  "version": "4.16.14",
+  "version": "4.16.15",
   "description": "CryptoIZ MCP Server - Solana DEX whale intelligence (alpha, divergence, accumulation, BTC regime). Recommended install: npx agentcash add https://mcp.cryptoiz.org. x402 V2 + Dexter gas-sponsored payments.",
   "main": "index.js",
   "type": "commonjs",

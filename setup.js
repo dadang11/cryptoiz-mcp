@@ -1,5 +1,5 @@
 'use strict';
-var VERSION = 'v4.16.7';
+var VERSION = 'v4.16.15';
 var fs = require('fs');
 var os = require('os');
 var path = require('path');

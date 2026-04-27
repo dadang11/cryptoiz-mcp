@@ -1,5 +1,5 @@
 'use strict';
-var VERSION = 'v4.16.13';
+var VERSION = 'v4.16.15';
 var GATEWAY = 'https://rehqwsypjnjirhuiapqh.supabase.co/functions/v1/mcp-x402-gateway';
 // FIX v4.16.12: route ALL paid tools to gateway. Per-tool endpoints (mcp-alpha-scanner etc.)
 // have stale hardcoded fee payer that breaks after Dexter key rotation. Gateway has dynamic
@@ -165,7 +165,33 @@ function clientHeaders(extra) {
   return h;
 }
 
+// v4.16.14: input validation per tool — defense in depth, server-side double-validates.
+function validateArgs(toolName, args) {
+  if (args == null) return {}; // Empty args ok
+  if (typeof args !== 'object' || Array.isArray(args)) {
+    throw new Error('Invalid args: expected object, got ' + typeof args);
+  }
+  var clean = {};
+  if (toolName === 'get_whale_divergence') {
+    if (args.timeframe != null) {
+      if (typeof args.timeframe !== 'string') throw new Error('timeframe must be string');
+      if (args.timeframe !== '4h' && args.timeframe !== '1d') throw new Error("timeframe must be '4h' or '1d'");
+      clean.timeframe = args.timeframe;
+    }
+  } else if (toolName === 'get_token_ca') {
+    if (args.name == null) throw new Error('name is required for get_token_ca');
+    if (typeof args.name !== 'string') throw new Error('name must be string');
+    var trimmed = args.name.trim();
+    if (trimmed.length < 1 || trimmed.length > 64) throw new Error('name length must be 1-64 chars');
+    if (!/^[a-zA-Z0-9 _\-\$\.\u00c0-\uffff]+$/.test(trimmed)) throw new Error('name contains invalid chars');
+    clean.name = trimmed;
+  }
+  // Other tools accept no args — anything passed is silently dropped.
+  return clean;
+}
+
 async function callTool(toolName, args) {
+  args = validateArgs(toolName, args);
   var queryParts = ['tool=' + toolName];
   if (toolName === 'get_whale_divergence' && args && args.timeframe) queryParts.push('tf=' + args.timeframe);
   if (toolName === 'get_token_ca' && args && args.name) queryParts.push('name=' + encodeURIComponent(args.name));
