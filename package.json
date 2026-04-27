@@ -1,7 +1,7 @@
 {
   "name": "cryptoiz-mcp",
-  "version": "4.16.13",
-  "description": "CryptoIZ MCP Server - Solana DEX whale intelligence via Claude Desktop with x402 USDC micropayments",
+  "version": "4.16.14",
+  "description": "CryptoIZ MCP Server - Solana DEX whale intelligence (alpha, divergence, accumulation, BTC regime). Recommended install: npx agentcash add https://mcp.cryptoiz.org. x402 V2 + Dexter gas-sponsored payments.",
   "main": "index.js",
   "type": "commonjs",
   "bin": {
@@ -15,7 +15,7 @@
     "README.md"
   ],
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.4",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@solana/web3.js": "^1.95.8",
     "bs58": "^6.0.0"
   },
@@ -27,5 +27,23 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/dadang11/cryptoiz-mcp.git"
+  },
+  "keywords": [
+    "mcp",
+    "solana",
+    "whale-tracking",
+    "alpha-scanner",
+    "x402",
+    "dexter",
+    "agentcash",
+    "defi",
+    "smart-money",
+    "btc-regime",
+    "divergence",
+    "accumulation"
+  ],
+  "homepage": "https://cryptoiz.org/McpLanding",
+  "bugs": {
+    "url": "https://github.com/dadang11/cryptoiz-mcp/issues"
   }
 }
