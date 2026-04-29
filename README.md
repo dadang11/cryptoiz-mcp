@@ -38,13 +38,13 @@ npx agentcash add https://mcp.cryptoiz.org/agents/deep-research  # Token deep-di
 
 | Tool | Cost | Description |
 |---|---|---|
-| `get_whale_alpha` | $0.05 USDC | Top 20 alpha signals — whale/dolphin accumulation, entry timing |
-| `get_whale_divergence` | $0.02 USDC | Hidden/breakout/classic divergence signals (4h/1d) |
-| `get_whale_accumulation` | $0.02 USDC | Tokens with smart money accumulating |
-| `get_whale_neutral` | $0.02 USDC | Tokens in transition phase |
-| `get_whale_distribution` | $0.02 USDC | Tokens with whales selling (exit signal) |
-| `get_btc_regime` | $0.01 USDC | BTC macro regime + sentiment + technicals |
-| `get_btc_futures_signal` | $0.03 USDC | BTC futures multi-timeframe signal (54% WR) |
+| `get_whale_alpha` | $0.10 USDC | Top 20 alpha signals — whale/dolphin accumulation, entry timing |
+| `get_whale_divergence` | $0.04 USDC | Hidden/breakout/classic divergence signals (4h/1d) |
+| `get_whale_accumulation` | $0.03 USDC | Tokens with smart money accumulating |
+| `get_whale_neutral` | $0.03 USDC | Tokens in transition phase |
+| `get_whale_distribution` | $0.04 USDC | Tokens with whales selling (exit signal) |
+| `get_btc_regime` | $0.02 USDC | BTC macro regime + sentiment + technicals |
+| `get_btc_futures_signal` | $0.06 USDC | BTC futures multi-timeframe signal (54% WR) |
 | `get_token_ca` | FREE | Look up Solana contract address by name |
 | `get_status` | FREE | Server status, available tools, pricing |
 
