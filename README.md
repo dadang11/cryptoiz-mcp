@@ -84,7 +84,7 @@ File: `%APPDATA%\Claude\claude_desktop_config.json` (Windows) or `~/Library/Appl
 
 ### 4. Restart Claude Desktop
 
-Then ask Claude: `get cryptoiz status` — you should see version `v4.16.14` and the tool list.
+Then ask Claude: `get cryptoiz status` — you should see version `v4.16.17` and the tool list.
 
 ## Security
 
