@@ -1,0 +1,19 @@
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      SVM_PRIVATE_KEY:
+        type: string
+        title: Solana Private Key (base58)
+        description: >
+          Your Solana wallet private key for x402 pay-per-call.
+          Optional if using agentcash (recommended - no key needed in config).
+          Fund with $1-5 USDC on Solana. No SOL needed, gas sponsored by Dexter.
+    required: []
+  commandFunction: |-
+    (config) => ({
+      command: "npx",
+      args: ["-y", "cryptoiz-mcp@latest"],
+      env: config.SVM_PRIVATE_KEY ? { SVM_PRIVATE_KEY: config.SVM_PRIVATE_KEY } : {}
+    })
