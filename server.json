@@ -1,28 +1,27 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
   "name": "io.github.dadang11/cryptoiz",
-  "description": "v4.16.0 - AI-powered Solana DEX whale intelligence for Claude Desktop. 9 tools: whale alpha/divergence/accumulation/neutral/distribution scanners, BTC macro regime, and NEW BTC Futures Signal (4H+5m MTF scalping). Pay-per-call via x402 USDC on Solana ($0.01-$0.05). No subscription, no API key, gas sponsored by Dexter.",
+  "description": "v4.16.17 - Solana DEX whale intelligence for Claude Desktop. 9 tools (7 paid via x402 USDC, 2 free). Recommended: npx agentcash add https://mcp.cryptoiz.org (no private key needed). Pricing: get_whale_alpha $0.10, get_whale_divergence $0.04, get_whale_accumulation $0.03, get_whale_neutral $0.03, get_whale_distribution $0.04, get_btc_regime $0.02, get_btc_futures_signal $0.06. Gas sponsored by Dexter facilitator.",
   "status": "active",
   "repository": {
     "url": "https://github.com/dadang11/cryptoiz-mcp",
     "source": "github"
   },
-  "version": "4.16.0",
+  "version": "4.16.17",
   "packages": [
     {
       "registry_type": "npm",
       "registry_base_url": "https://registry.npmjs.org",
       "identifier": "cryptoiz-mcp",
-      "version": "4.16.0",
+      "version": "4.16.15",
       "transport": {
         "type": "stdio"
       },
       "environment_variables": [
         {
           "name": "SVM_PRIVATE_KEY",
-          "description": "Your Solana wallet private key (base58) for x402 USDC payments",
-          "isRequired": true,
-          "isSecret": true
+          "description": "Your Solana wallet private key (base58) for x402 USDC payments. Optional if using agentcash (recommended).",
+          "required": false
         }
       ]
     }
